@@ -2235,7 +2235,7 @@ public class RecordAccumulatorTest {
 
                 long now = time.milliseconds();
 
-                // Act: Append a single record and advance time to just before lingerMs expires
+                // Append a single record and advance time to just before lingerMs expires
                 accumulator.append(
                                 tp1.topic(),
                                 tp1.partition(),
@@ -2274,7 +2274,7 @@ public class RecordAccumulatorTest {
 
                 long now = time.milliseconds();
 
-                // Act: Append a single record and advance time to just before lingerMs expires
+                // Append a single record and advance time to just before lingerMs expires
                 accumulator.append(
                                 tp1.topic(),
                                 tp1.partition(),
@@ -2313,7 +2313,7 @@ public class RecordAccumulatorTest {
 
                 long now = time.milliseconds();
 
-                // Act: Append a single record and advance time to just before lingerMs expires
+                // Append a single record and advance time to just before lingerMs expires
                 accumulator.append(
                                 tp1.topic(),
                                 tp1.partition(),
@@ -2335,4 +2335,73 @@ public class RecordAccumulatorTest {
                                 result.readyNodes.contains(node1),
                                 "Batch should be ready when elapsed time exceeds linger.ms");
         }
+
+        @Test
+        public void testBatchSizeJustBelowBoundary() throws Exception {
+                int batchSize = 1024;
+                int lingerMs = 60000;
+
+                RecordAccumulator accumulator = createTestRecordAccumulator(
+                                batchSize, 16384, Compression.NONE, lingerMs);
+
+                long now = time.milliseconds();
+                int overhead = DefaultRecordBatch.RECORD_BATCH_OVERHEAD;
+
+                // Use value length such that batch size is just below the batch.size limit
+                byte[] valueBelow = new byte[batchSize - overhead - 1];
+                RecordAccumulator.RecordAppendResult result = accumulator.append(
+                                tp1.topic(), tp1.partition(), now, null, valueBelow,
+                                Record.EMPTY_HEADERS, null, 0, now, cluster);
+
+                // The record should be accepted into a new batch
+                assertNotNull(result.future, "Record should be accepted");
+
+                // The batch should NOT be ready as it doesn't fill the batch (and linger.ms is
+                // high)
+                RecordAccumulator.ReadyCheckResult ready = accumulator.ready(metadataCache, now);
+                assertFalse(ready.readyNodes.contains(node1),
+                                "Batch should not be ready when total size is below batch.size");
+        }
+
+        @Test
+        public void testBatchSizeExactlyAtBoundary() throws Exception {
+                int batchSize = 1024;
+                int lingerMs = 60000;
+
+                RecordAccumulator accumulator = createTestRecordAccumulator(
+                                batchSize, 16384, Compression.NONE, lingerMs);
+
+                long now = time.milliseconds();
+                int overhead = DefaultRecordBatch.RECORD_BATCH_OVERHEAD;
+
+                // Use value length such that batch size is exactly batch.size
+                byte[] valueAtBoundary = new byte[batchSize - overhead];
+                RecordAccumulator.RecordAppendResult result = accumulator.append(
+                                tp1.topic(), tp1.partition(), now, null, valueAtBoundary,
+                                Record.EMPTY_HEADERS, null, 0, now, cluster);
+
+                // The record should be accepted into a new batch -- filling it exactly
+                assertNotNull(result.future, "Record that fills batch should be accepted");
+        }
+
+        @Test
+        public void testBatchSizeJustAboveBoundary() throws Exception {
+                int batchSize = 1024;
+                int lingerMs = 60000;
+
+                RecordAccumulator accumulator = createTestRecordAccumulator(
+                                batchSize, 16384, Compression.NONE, lingerMs);
+
+                long now = time.milliseconds();
+
+                // Value length that exceeds the batch.size
+                byte[] valueAbove = new byte[batchSize + 1];
+                RecordAccumulator.RecordAppendResult result = accumulator.append(
+                                tp1.topic(), tp1.partition(), now, null, valueAbove,
+                                Record.EMPTY_HEADERS, null, 0, now, cluster);
+
+                // The record should still be accepted, per Kafka semantics
+                assertNotNull(result.future, "Large record exceeding batch.size should be accepted");
+        }
+
 }
