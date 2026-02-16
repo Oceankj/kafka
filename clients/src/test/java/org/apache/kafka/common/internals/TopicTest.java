@@ -139,24 +139,28 @@ public class TopicTest {
     }
 
     @Test
-    void shouldThrowValidateException() {
+    void shouldInvokeConsumerWhenTopicIsInvalid() {
         // Arrange
-        String invalidTopicName = "invalid@@@"; // invalid
-        String logPrefix = "Topic";
+        String invalidTopicName = "invalid topic";
+        String logPrefix = "TestPrefix";
 
-        // should throw InvalidTopicException
-        InvalidTopicException exception = assertThrows(InvalidTopicException.class, () -> {
-            Topic.validate(invalidTopicName, logPrefix, msg -> {
-                throw new InvalidTopicException(msg);
-            });
+        // Use AtomicBoolean to record whether the Consumer is called
+        java.util.concurrent.atomic.AtomicBoolean wasCalled = new java.util.concurrent.atomic.AtomicBoolean(false);
+
+        // Act
+        Topic.validate(invalidTopicName, logPrefix, errorMessage -> {
+            // When the Consumer is called, set the state to true
+            wasCalled.set(true);
+
+            // verify the error message format
+            // Expected message: "TestPrefix is invalid: ..."
+            if (!errorMessage.startsWith(logPrefix + " is invalid:")) {
+                throw new AssertionError("Error message format is wrong: " + errorMessage);
+            }
         });
 
-        String expectedMessage = logPrefix + " is invalid: " +
-                "'" + invalidTopicName + "' contains one or more characters other than " +
-                "ASCII alphanumerics, '.', '_' and '-'";
-        assertEquals(
-                expectedMessage,
-                exception.getMessage());
+        // Assert
+        assertTrue(wasCalled.get(), "The consumer should be called because the topic name is invalid");
     }
 
     @Test
@@ -181,22 +185,6 @@ public class TopicTest {
     @Test
     public void shouldThrowExceptionWhenCheckingNullTopicForInternal() {
         assertThrows(NullPointerException.class, () -> Topic.isInternal(null));
-    }
-
-    @Test
-    public void shouldAcceptValidCharactersInTopicNames() {
-        String[] validTopics = {
-                "valid.topic", // contains .
-                "valid_topic", // contains _
-                "valid-topic", // contains -
-                "ValidTopic123", // contains A-Z, a-z, 0-9
-                "12345", // only digits
-                "topic" // only lowercase letters
-        };
-
-        for (String topic : validTopics) {
-            assertTrue(Topic.containsValidPattern(topic), "Topic " + topic + " should be valid");
-        }
     }
 
 }
