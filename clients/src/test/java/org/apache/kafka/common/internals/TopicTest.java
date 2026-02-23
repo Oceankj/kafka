@@ -27,6 +27,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -35,7 +36,7 @@ public class TopicTest {
     @Test
     public void shouldAcceptValidTopicNames() {
         String maxLengthString = TestUtils.randomString(249);
-        String[] validTopicNames = {"valid", "TOPIC", "nAmEs", "ar6", "VaL1d", "_0-9_.", "...", maxLengthString};
+        String[] validTopicNames = { "valid", "TOPIC", "nAmEs", "ar6", "VaL1d", "_0-9_.", "...", maxLengthString };
 
         for (String topicName : validTopicNames) {
             Topic.validate(topicName);
@@ -46,7 +47,7 @@ public class TopicTest {
     public void shouldThrowOnInvalidTopicNames() {
         char[] longString = new char[250];
         Arrays.fill(longString, 'a');
-        String[] invalidTopicNames = {"", "foo bar", "..", "foo:bar", "foo=bar", ".", new String(longString)};
+        String[] invalidTopicNames = { "", "foo bar", "..", "foo:bar", "foo=bar", ".", new String(longString) };
 
         for (String topicName : invalidTopicNames) {
             try {
@@ -60,7 +61,7 @@ public class TopicTest {
 
     @Test
     public void shouldRecognizeInvalidCharactersInTopicNames() {
-        char[] invalidChars = {'/', '\\', ',', '\u0000', ':', '"', '\'', ';', '*', '?', ' ', '\t', '\r', '\n', '='};
+        char[] invalidChars = { '/', '\\', ',', '\u0000', ':', '"', '\'', ';', '*', '?', ' ', '\t', '\r', '\n', '=' };
 
         for (char c : invalidChars) {
             String topicName = "Is " + c + "illegal";
@@ -73,8 +74,7 @@ public class TopicTest {
         List<String> falseTopics = Arrays.asList("start", "end", "middle", "many");
         List<String> trueTopics = Arrays.asList(
                 ".start", "end.", "mid.dle", ".ma.ny.",
-                "_start", "end_", "mid_dle", "_ma_ny."
-        );
+                "_start", "end_", "mid_dle", "_ma_ny.");
 
         for (String topic : falseTopics)
             assertFalse(Topic.hasCollisionChars(topic));
@@ -112,4 +112,79 @@ public class TopicTest {
         for (int i = 0; i < periodFirstMiddleLastNone.size(); ++i)
             assertFalse(Topic.hasCollision(periodFirstMiddleLastNone.get(i), underscoreFirstMiddleLastNone.get(i)));
     }
+
+    @Test
+    public void shouldReturnTrueForValidName() {
+        String maxLengthString = TestUtils.randomString(249);
+        String[] validTopicNames = {
+                "valid", "TOPIC", "nAmEs", "ar6", "VaL1d", "_0-9_.", "...", maxLengthString
+        };
+
+        for (String topicName : validTopicNames) {
+            assertTrue(Topic.isValid(topicName));
+        }
+    }
+
+    @Test
+    public void shouldReturnFalseForInvalidTopicNames() {
+        char[] longString = new char[250];
+        Arrays.fill(longString, 'a');
+        String[] invalidTopicNames = {
+                "", "foo bar", "..", "foo:bar", "foo=bar", ".", new String(longString)
+        };
+
+        for (String topicName : invalidTopicNames) {
+            assertFalse(Topic.isValid(topicName));
+        }
+    }
+
+    @Test
+    void shouldInvokeConsumerWhenTopicIsInvalid() {
+        // Arrange
+        String invalidTopicName = "invalid topic";
+        String logPrefix = "TestPrefix";
+
+        // Use AtomicBoolean to record whether the Consumer is called
+        java.util.concurrent.atomic.AtomicBoolean wasCalled = new java.util.concurrent.atomic.AtomicBoolean(false);
+
+        // Act
+        Topic.validate(invalidTopicName, logPrefix, errorMessage -> {
+            // When the Consumer is called, set the state to true
+            wasCalled.set(true);
+
+            // verify the error message format
+            // Expected message: "TestPrefix is invalid: ..."
+            if (!errorMessage.startsWith(logPrefix + " is invalid:")) {
+                throw new AssertionError("Error message format is wrong: " + errorMessage);
+            }
+        });
+
+        // Assert
+        assertTrue(wasCalled.get(), "The consumer should be called because the topic name is invalid");
+    }
+
+    @Test
+    public void shouldIdentifyKnownInternalTopicsAsInternal() {
+        assertTrue(Topic.isInternal(Topic.GROUP_METADATA_TOPIC_NAME), "__consumer_offsets should be internal");
+        assertTrue(Topic.isInternal(Topic.TRANSACTION_STATE_TOPIC_NAME), "__transaction_state should be internal");
+        assertTrue(Topic.isInternal(Topic.SHARE_GROUP_STATE_TOPIC_NAME), "__share_group_state should be internal");
+    }
+
+    @Test
+    public void shouldNotIdentifyStandardTopicsAsInternal() {
+        assertFalse(Topic.isInternal("my-business-topic"), "Standard topic should not be internal");
+        assertFalse(Topic.isInternal("kafka-logs"), "Standard topic should not be internal");
+    }
+
+    @Test
+    public void shouldNotTreatClusterMetadataTopicAsInternal() {
+        assertFalse(Topic.isInternal(Topic.CLUSTER_METADATA_TOPIC_NAME),
+                "__cluster_metadata should NOT be internal in this version");
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenCheckingNullTopicForInternal() {
+        assertThrows(NullPointerException.class, () -> Topic.isInternal(null));
+    }
+
 }
