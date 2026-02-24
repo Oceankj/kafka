@@ -1,0 +1,77 @@
+name: Clients Tests (FSM and White Box)
+
+on:
+  push:
+    branches:
+      - "trunk"
+    paths:
+      - "clients/**"
+  pull_request:
+    branches:
+      - "trunk"
+    paths:
+      - "clients/**"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+
+jobs:
+  finite-state-machine-test:
+    name: Finite State Machine Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Setup Python
+        uses: ./.github/actions/setup-python
+
+      - name: Setup Gradle
+        uses: ./.github/actions/setup-gradle
+        with:
+          java-version: 25
+          gradle-cache-read-only: ${{ github.ref != 'refs/heads/trunk' }}
+          gradle-cache-write-only: ${{ github.ref == 'refs/heads/trunk' }}
+          develocity-access-key: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
+
+      - name: Run Metadata FSM tests
+        run: |
+          ./gradlew :clients:test \
+            --tests "org.apache.kafka.clients.MetadataTest.testInitialMetadataStateIsEmpty" \
+            --tests "org.apache.kafka.clients.MetadataTest.testMetadataStateAfterRequestUpdate" \
+            --tests "org.apache.kafka.clients.MetadataTest.testFetchingToReadyOnUpdate" \
+            --tests "org.apache.kafka.clients.MetadataTest.testReadyToStaleOnExpire" \
+            --tests "org.apache.kafka.clients.MetadataTest.testStaleToReadyOnSuccessfulUpdate" \
+            -x checkstyleTest
+
+  white-box-test:
+    name: White Box Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Setup Python
+        uses: ./.github/actions/setup-python
+
+      - name: Setup Gradle
+        uses: ./.github/actions/setup-gradle
+        with:
+          java-version: 25
+          gradle-cache-read-only: ${{ github.ref != 'refs/heads/trunk' }}
+          gradle-cache-write-only: ${{ github.ref == 'refs/heads/trunk' }}
+          develocity-access-key: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
+
+      - name: Run TopicTest (white box with coverage)
+        run: |
+          ./gradlew :clients:test \
+            -PenableTestCoverage=true \
+            -x checkstyleTest \
+            --tests "*TopicTest" \
+            --continue
