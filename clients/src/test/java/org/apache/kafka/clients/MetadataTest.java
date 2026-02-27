@@ -146,7 +146,6 @@ public class MetadataTest {
                                 metadataExpireMs, new LogContext(), new ClusterResourceListeners());
                 metadata.bootstrap(Collections.singletonList(new InetSocketAddress("localhost", 9002)));
 
-                System.out.println("MockTime: " + time.milliseconds());
                 assertEquals(0, metadata.timeToAllowUpdate(time.milliseconds()));
                 assertEquals(0, metadata.timeToNextUpdate(time.milliseconds()));
         }
