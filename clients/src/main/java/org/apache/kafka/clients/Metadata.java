@@ -123,6 +123,28 @@ public class Metadata implements Closeable {
         this.unauthorizedTopics = Collections.emptySet();
     }
 
+    public Metadata(ExponentialBackoff refreshBackoff,
+        long metadataExpireMs,
+        LogContext logContext,
+        ClusterResourceListeners clusterResourceListeners) {
+        this.log = logContext.logger(Metadata.class);
+        this.refreshBackoff = refreshBackoff;
+        this.metadataExpireMs = metadataExpireMs;
+        this.lastRefreshMs = 0L;
+        this.lastSuccessfulRefreshMs = 0L;
+        this.attempts = 0L;
+        this.requestVersion = 0;
+        this.updateVersion = 0;
+        this.needFullUpdate = false;
+        this.needPartialUpdate = false;
+        this.equivalentResponseCount = 0;
+        this.clusterResourceListeners = clusterResourceListeners;
+        this.isClosed = false;
+        this.lastSeenLeaderEpochs = new HashMap<>();
+        this.invalidTopics = Collections.emptySet();
+        this.unauthorizedTopics = Collections.emptySet();
+    }
+
     /**
      * Get the current cluster info without blocking
      */

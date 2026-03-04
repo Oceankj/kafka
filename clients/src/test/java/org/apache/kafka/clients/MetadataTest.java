@@ -39,6 +39,7 @@ import org.apache.kafka.common.requests.RequestTestUtils;
 import org.apache.kafka.common.utils.LogContext;
 import org.apache.kafka.common.utils.MockTime;
 import org.apache.kafka.common.utils.Time;
+import org.apache.kafka.common.utils.ExponentialBackoff;
 import org.apache.kafka.test.MockClusterResourceListener;
 
 import org.junit.jupiter.api.Test;
@@ -1491,4 +1492,39 @@ public class MetadataTest {
                 assertEquals(0, metadata.timeToNextUpdate(time.milliseconds()));
         }
 
+
+        
+        @Test
+        public void testTimeToNextUpdateRetryBackoffWithNewConstructor() {
+            // Arrange: Create a mock ExponentialBackoff that always returns 500 ms
+            ExponentialBackoff mockBackoff = Mockito.mock(ExponentialBackoff.class);
+            Mockito.when(mockBackoff.backoff(Mockito.anyLong())).thenReturn(500L);
+
+            // Instantiate Metadata with the mocked backoff and other required parameters
+            Metadata testMetadata = new Metadata(
+                    mockBackoff,
+                    metadataExpireMs,
+                    new LogContext(),
+                    new ClusterResourceListeners()
+            );
+
+            long initialTime = 10000;
+
+            // Act: Simulate a failed update at the current time
+            testMetadata.failedUpdate(initialTime);
+
+            // Assert: Since backoff is fixed at 500 ms, timeToNextUpdate should return 500
+            assertEquals(500L, testMetadata.timeToNextUpdate(initialTime),
+                    "Expected backoff to be 500 ms immediately after failed update.");
+
+            // Act: Request another update and check timeToNextUpdate remains 500 ms
+            testMetadata.requestUpdate(true);
+            assertEquals(500L, testMetadata.timeToNextUpdate(initialTime),
+                    "Expected backoff to be 500 ms after requestUpdate.");
+
+            // Act: Advance time past the backoff window and verify timeToNextUpdate returns 0
+            long laterTime = initialTime + 501;
+            assertEquals(0, testMetadata.timeToNextUpdate(laterTime),
+                    "Expected timeToNextUpdate to be 0 after backoff period has elapsed.");
+        }
 }
