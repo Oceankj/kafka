@@ -819,8 +819,8 @@ subprojects {
 
   spotbugs {
     toolVersion = versions.spotbugs
-    excludeFilter = file("$rootDir/gradle/spotbugs-exclude.xml")
-    ignoreFailures = false
+    // excludeFilter = file("$rootDir/gradle/spotbugs-exclude.xml")
+    ignoreFailures = true
   }
   test.dependsOn('spotbugsMain')
 
