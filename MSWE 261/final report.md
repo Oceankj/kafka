@@ -20,7 +20,7 @@ Apache Kafka is a popular event streaming platform used to collect, process, and
 
 It is widely used in microservices architectures, IoT, clickstream analytics, and real-time machine learning pipelines.
 
-![](./MSWE%20261/What%20is%20kafka.webp)
+![](./What%20is%20kafka.webp)
 
 ## Key Components
 
@@ -514,7 +514,7 @@ The following flowchart and code represent the same model—a simple LED control
 <div style="display: flex; gap: 32px; align-items: flex-start;">
 
 <div style="flex: 1;">
-  <img src="./MSWE%20261/simple%20LED%20controller.png" alt="Simple LED controller flowchart" style="max-width: 100%;">
+  <img src="./simple%20LED%20controller.png" alt="Simple LED controller flowchart" style="max-width: 100%;">
 </div>
 
 <div style="flex: 1;">
@@ -625,7 +625,7 @@ For testing purposes, we define a higher-level FSM that captures the observable 
 
 ### Functional model 
 
-![](./MSWE%20261/Functional%20model.png)
+![](./Functional%20model.png)
 
 | Current State | `requestUpdate()`   | `update(response)`    | `timeElapsed > max`    |
 |---------------|---------------------|-----------------------|---------------------------|
@@ -719,7 +719,7 @@ metadata.updateWithCurrentRequestVersion(response, false, time.milliseconds());
   -x checkstyleTest
 ```
 
-![./test_result](./MSWE%20261/test_result.png)
+![./test_result](./test_result.png)
 
 ---
 
@@ -748,7 +748,7 @@ Structural models can be categorized into two types:
 1. **Intraprocedural:** Focuses on the structure within a single procedure, function, or method.
   - Examples: Control Flow Graph (CFG).
 
-![](./MSWE%20261/CFG.png)
+![](./CFG.png)
 > The red-dashed blocks indicate basic blocks—a basic block is a sequence of consecutive statements where control flow enters at the beginning and exits at the end, with no possibility of branching or halting within the block. 
 > 
 > These sequences are grouped because their execution is linear and does not influence the decision points or branching in the overall control flow graph (CFG).
@@ -827,9 +827,9 @@ Structural testing provides **a systematic way to verify software reliability**.
 **Location of Coverage Report:**  
 `clients/build/reports/jacoco/test/html/index.html`
 
-![](./MSWE%20261/%20Bofore%20Test%20Coverage.png)
-![](./MSWE%20261/bofore%20component%20test%20coverage.png)
-![](./MSWE%20261/Topic_java_before.jpeg)
+![](./%20Bofore%20Test%20Coverage.png)
+![](./bofore%20component%20test%20coverage.png)
+![](./Topic_java_before.jpeg)
 
 Based on the coverage report screenshots (notably the areas marked in red), the following sections of the `Topic.java` code are not exercised by the current test suite:
 
@@ -905,9 +905,9 @@ Based on the coverage report screenshots (notably the areas marked in red), the 
 
 ### Improved Coverage Report Screenshots
 
-![](./MSWE%20261/report_after.png)
-![](./MSWE%20261/%20After%20Test%20Coverage.png)
-![](./MSWE%20261/Topic_java_after.jpeg)
+![](./report_after.png)
+![](./%20After%20Test%20Coverage.png)
+![](./Topic_java_after.jpeg)
 
 ---
 
@@ -973,7 +973,7 @@ Each integration immediately reveals issues, making bugs and integration errors 
 
 ## Problem 1:
 The project initially contained too many original CI workflow files, which led to confusion and redundancy.
-![](./MSWE%20261/ci%20fail.png)
+![](./ci%20fail.png)
 
 **Solution:**
 - Replaced previous CI with a minimal placeholder workflow (`ci.yml`).
@@ -983,7 +983,7 @@ The project initially contained too many original CI workflow files, which led t
 ## Problem 2:
 Even after deleting the corresponding YAML files, some workflows were still being triggered.
 
-![](./MSWE%20261/ci%20fail%202.png)
+![](./ci%20fail%202.png)
 
 **Solution:**
 
@@ -993,7 +993,7 @@ However, GitHub Actions determines which workflows to run based on the branch th
 
 To resolve this, I merged my workflow changes into the `trunk` branch and verified that the CI process triggered as expected.
 
-![](./MSWE%20261/ci%20success.png)
+![](./ci%20success.png)
 
 ---
 
@@ -1135,7 +1135,7 @@ public void testUpdateMetadataAllowedImmediatelyAfterBootstrapStubbingTime() {
   -x checkstyleTest
 ```
 
-![](./MSWE%20261/test_result_stubbing.png)
+![](./test_result_stubbing.png)
 
 ## Bad testable design
 
@@ -1195,7 +1195,7 @@ public class Metadata implements Closeable {
   -x checkstyleTest
 ```
 
-![test_result_bad_design](./MSWE%20261/test_result_bad_design.png)
+![test_result_bad_design](./test_result_bad_design.png)
 
 
 
@@ -1331,7 +1331,7 @@ In summary, the advantage of using Mockito is that it allows you to directly ver
   -x checkstyleTest
 ```
 
-![test_result_mocking](./MSWE%20261/test_result_mocking.png)
+![test_result_mocking](./test_result_mocking.png)
 
 ---
 
@@ -1357,7 +1357,7 @@ The main goal of static analysis is to scan and analyze source code without actu
 
 # Github CodeQL's "standard findings" 
 
-![](./MSWE%20261/Code%20scanning%20alerts%20_%20Oceankj_kafka.jpeg)
+![](./Code%20scanning%20alerts%20_%20Oceankj_kafka.jpeg)
 
 ## Deep Dive into Specific Warnings: CodeQL Findings
 CodeQL mainly focuses on finding **Security & Reliability** issues. Here are three interesting warnings we found, explained simply:
@@ -1383,7 +1383,7 @@ To analyze the codebase with SpotBugs, run:
 ./gradlew :clients:spotbugsMain
 ```
 
-![](./MSWE%20261/spotbug_origin.png)
+![](./spotbug_origin.png)
 
 ## Why Are There Zero Warnings?
 
@@ -1429,13 +1429,13 @@ spotbugs {
 
 SpotBugs reports many more findings:
 
-![](./MSWE%20261/spotbug_turn_off_filter.png)
+![](./spotbug_turn_off_filter.png)
 
 ## Examining the Findings
 
 Digging deeper into the raw report:
 
-![](./MSWE%20261/spotbug_detail.png)
+![](./spotbug_detail.png)
 
 A significant number of findings are of type `CT_CONSTRUCTOR_THROW`, indicating constructors that may throw exceptions. This is illustrated in Kafka by patterns like:
 
